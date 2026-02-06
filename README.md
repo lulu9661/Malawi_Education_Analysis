@@ -63,3 +63,67 @@ This analysis examines two dimensions of educational exclusion in Malawi:
 │
 └── Exclusion from Education in Malawi.docx  # Final report
 ```
+## Requirements
+
+### Software
+- R (version 4.0 or higher)
+- RStudio (recommended)
+- Required packages are installed in 01_data_preparation.R
+
+
+## How to Reproduce the Analysis
+
+### Step 1: Clone the repository
+
+```bash
+git clone https://github.com/lulu9661/Malawi_Education_Analysis.git
+cd Malawi_Education_Analysis
+```
+
+### Step 2: Unzip raw data
+
+```bash
+cd data/raw
+unzip IHS_5.zip
+unzip MICS_6.zip
+unzip MICS_6_GPS.zip
+cd ../..
+```
+
+Or unzip manually using your file explorer.
+
+### Step 3: Run the scripts in order
+
+Open RStudio and run each script sequentially:
+
+```r
+source("scripts/01_data_preparation.R")  # ~5 min
+source("scripts/02_analysis.R")          # ~2 min
+source("scripts/03_outputs.R")           # ~1 min
+```
+
+Alternatively, open each script and run interactively to inspect intermediate outputs.
+
+### Step 4: View outputs
+
+Results are saved to the `outputs/` folder:
+- `outputs/tables/` — CSV files with summary statistics and regression results
+- `outputs/figures/` — PNG charts
+- `outputs/maps/` — Geographic visualizations by district
+
+## Key Outputs
+
+| File | Description |
+|------|-------------|
+| `summary_table_oosr.csv` | Out-of-school rates by age, sex, region, wealth |
+| `summary_table_foundational_reading.csv` | Foundational reading proficiency by demographics |
+| `oosr_regression.csv` | Regression model (odds ratios): predictors of being out of school |
+| `reading_regression.csv` | Regression model (odds ratios): predictors of reading proficiency |
+| `district_stats.csv` | District-level education indicators |
+| `combined_district_maps.png` | Map of OOSR and reading outcomes by district |
+
+
+## License
+
+Code: MIT License
+
