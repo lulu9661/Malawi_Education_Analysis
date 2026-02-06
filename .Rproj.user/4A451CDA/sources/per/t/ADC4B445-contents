@@ -1,0 +1,355 @@
+# =============================================================================
+# 01_data_preparation.R
+# Education Inequality Analysis in Malawi using MICS6 2019-2020 Data
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. SETUP: Load Required Packages
+# -----------------------------------------------------------------------------
+
+# Function to install and load packages
+load_packages <- function(packages) {
+  for (pkg in packages) {
+    if (!require(pkg, character.only = TRUE)) {
+      install.packages(pkg, dependencies = TRUE)
+      library(pkg, character.only = TRUE)
+    }
+  }
+}
+
+# Required packages
+packages <- c(
+  "tidyverse",   # Data manipulation and visualization
+
+"haven",       # Read SPSS files
+  "labelled",    # Work with labelled data
+  "survey",      # Complex survey analysis
+  "summarytools" # Quick data exploration
+)
+
+load_packages(packages)
+
+# -----------------------------------------------------------------------------
+# 2. SET PATHS
+# -----------------------------------------------------------------------------
+
+# Project root directory
+project_dir <- "/Users/lucy/Desktop/Malawi_Education"
+
+# Data paths
+data_raw <- file.path(project_dir, "data/raw/MICS_6/Malawi MICS6 SPSS Datasets")
+data_processed <- file.path(project_dir, "data/processed")
+output_dir <- file.path(project_dir, "outputs")
+
+# Create processed data directory if it doesn't exist
+if (!dir.exists(data_processed)) {
+  dir.create(data_processed, recursive = TRUE)
+}
+
+# -----------------------------------------------------------------------------
+# 3. LOAD MICS6 DATA FILES
+# -----------------------------------------------------------------------------
+
+cat("\n=== Loading MICS6 Malawi 2019-2020 Data ===\n\n")
+
+# Household data (wealth index, area, region)
+cat("Loading household data (hh.sav)...\n")
+hh <- read_sav(file.path(data_raw, "hh.sav"))
+cat(paste("  Rows:", nrow(hh), "| Columns:", ncol(hh), "\n"))
+
+# Household members (all household members with basic demographics)
+cat("Loading household members data (hl.sav)...\n")
+hl <- read_sav(file.path(data_raw, "hl.sav"))
+cat(paste("  Rows:", nrow(hl), "| Columns:", ncol(hl), "\n"))
+
+# Children age 5-17 (foundational learning skills, school attendance)
+cat("Loading children 5-17 data (fs.sav)...\n")
+fs <- read_sav(file.path(data_raw, "fs.sav"))
+cat(paste("  Rows:", nrow(fs), "| Columns:", ncol(fs), "\n"))
+
+# Women age 15-49 (education, background)
+cat("Loading women's data (wm.sav)...\n")
+wm <- read_sav(file.path(data_raw, "wm.sav"))
+cat(paste("  Rows:", nrow(wm), "| Columns:", ncol(wm), "\n"))
+
+# Men age 15-49 (education, background)
+cat("Loading men's data (mn.sav)...\n")
+mn <- read_sav(file.path(data_raw, "mn.sav"))
+cat(paste("  Rows:", nrow(mn), "| Columns:", ncol(mn), "\n"))
+
+cat("\n=== Data Loading Complete ===\n\n")
+
+# -----------------------------------------------------------------------------
+# 4. EXPLORE DATA STRUCTURE
+# -----------------------------------------------------------------------------
+
+cat("=== Data Exploration ===\n\n")
+
+# Function to display key variables with labels
+explore_vars <- function(data, vars, data_name) {
+  cat(paste("\n--- Key variables in", data_name, "---\n"))
+  for (v in vars) {
+    if (v %in% names(data)) {
+      lbl <- attr(data[[v]], "label")
+      cat(paste0("  ", v, ": ", ifelse(is.null(lbl), "[no label]", lbl), "\n"))
+    }
+  }
+}
+
+# Key household variables
+hh_vars <- c("HH1", "HH2", "HH6", "HH7", "windex5", "windex5r", "windex5u",
+             "wscore", "helession", "stression")
+explore_vars(hh, hh_vars, "Household (hh)")
+
+# Key household member variables
+hl_vars <- c("HH1", "HH2", "HL1", "HL4", "HL6", "ED4", "ED5A", "ED5B",
+             "ED6A", "ED6B", "ED9", "ED10A", "ED10B", "ED16")
+explore_vars(hl, hl_vars, "Household Members (hl)")
+
+# Key education variables for children 5-17
+fs_vars <- c("HH1", "HH2", "FS1", "fsweight", "CB3", "CB7", "CB8A", "CB8B",
+             "FL3", "FL7", "FL9A", "FL13", "FL14", "FL18A", "FL21", "FL22",
+             "FL23", "FL24", "FL25")
+explore_vars(fs, fs_vars, "Children 5-17 (fs)")
+
+# -----------------------------------------------------------------------------
+# 5. IDENTIFY KEY VARIABLES FOR EDUCATION INEQUALITY ANALYSIS
+# -----------------------------------------------------------------------------
+
+cat("\n=== Identifying Key Variables ===\n\n")
+
+# Search for education-related variables in each dataset
+find_education_vars <- function(data, data_name) {
+  # Get all variable labels
+  labels <- sapply(data, function(x) attr(x, "label"))
+  labels[sapply(labels, is.null)] <- ""
+
+  # Search for education-related terms
+  ed_pattern <- "school|education|attend|grade|class|learn|read|write|literate"
+  ed_vars <- names(data)[grepl(ed_pattern, labels, ignore.case = TRUE)]
+
+  cat(paste("\nEducation-related variables in", data_name, ":\n"))
+  for (v in ed_vars[1:min(20, length(ed_vars))]) {
+    cat(paste0("  ", v, ": ", labels[v], "\n"))
+  }
+  if (length(ed_vars) > 20) {
+    cat(paste0("  ... and ", length(ed_vars) - 20, " more\n"))
+  }
+
+  return(ed_vars)
+}
+
+ed_vars_hl <- find_education_vars(hl, "hl")
+ed_vars_fs <- find_education_vars(fs, "fs")
+
+# -----------------------------------------------------------------------------
+# 6. EXAMINE HOUSEHOLD WEALTH INDEX
+# -----------------------------------------------------------------------------
+
+cat("\n=== Wealth Index Distribution ===\n\n")
+
+# Wealth quintiles (key stratifier for inequality analysis)
+if ("windex5" %in% names(hh)) {
+  cat("Wealth Quintile Distribution (National):\n")
+  print(table(as_factor(hh$windex5), useNA = "ifany"))
+
+  cat("\nWealth Quintile Labels:\n")
+  print(attr(hh$windex5, "labels"))
+}
+
+# Area (urban/rural)
+if ("HH6" %in% names(hh)) {
+  cat("\nArea of Residence:\n")
+  print(table(as_factor(hh$HH6), useNA = "ifany"))
+}
+
+# Region
+if ("HH7" %in% names(hh)) {
+  cat("\nRegion Distribution:\n")
+  print(table(as_factor(hh$HH7), useNA = "ifany"))
+}
+
+# -----------------------------------------------------------------------------
+# 7. CREATE MERGED ANALYSIS DATASET
+# -----------------------------------------------------------------------------
+
+cat("\n=== Creating Merged Analysis Dataset ===\n\n")
+
+# Select key household variables for merging
+hh_merge <- hh %>%
+  select(
+    HH1, HH2,                           # Cluster and household number (merge keys)
+    HH6,                                # Area (urban/rural)
+    HH7,                                # Region
+    starts_with("windex"),              # Wealth indices
+    wscore,                             # Wealth score (continuous)
+    hhweight                            # Household weight
+  ) %>%
+  mutate(
+    area = as_factor(HH6),
+    region = as_factor(HH7),
+    wealth_quintile = as_factor(windex5)
+  )
+
+cat("Household merge dataset prepared:", nrow(hh_merge), "households\n")
+
+# -----------------------------------------------------------------------------
+# 8. PREPARE CHILDREN 5-17 EDUCATION DATASET
+# -----------------------------------------------------------------------------
+
+cat("\n=== Preparing Children 5-17 Education Data ===\n\n")
+
+# Explore foundational learning skills variables
+cat("Checking foundational learning skills variables...\n")
+
+# Create education dataset for children 5-17
+children_education <- fs %>%
+  left_join(hh_merge, by = c("HH1", "HH2")) %>%
+  mutate(
+    # Demographics
+    child_age = as.numeric(CB3),
+    child_sex = as_factor(HL4),
+
+    # Create area and region labels if not already done
+    area = as_factor(HH6.x),
+    region = as_factor(HH7.x),
+    wealth_quintile = as_factor(windex5)
+  )
+
+cat("Children 5-17 dataset created:", nrow(children_education), "children\n")
+
+# -----------------------------------------------------------------------------
+# 9. CHECK SCHOOL ATTENDANCE VARIABLES
+# -----------------------------------------------------------------------------
+
+cat("\n=== School Attendance Variables ===\n\n")
+
+# Check for attendance variables
+attendance_vars <- names(fs)[grepl("CB7|CB8|ED|school|attend", names(fs), ignore.case = TRUE)]
+cat("Potential attendance variables:\n")
+for (v in attendance_vars[1:min(15, length(attendance_vars))]) {
+  lbl <- attr(fs[[v]], "label")
+  cat(paste0("  ", v, ": ", ifelse(is.null(lbl), "[no label]", lbl), "\n"))
+}
+
+# Examine current school attendance
+if ("CB7" %in% names(fs)) {
+  cat("\nSchool Attendance This Year (CB7):\n")
+  print(table(as_factor(fs$CB7), useNA = "ifany"))
+}
+
+# -----------------------------------------------------------------------------
+# 10. FOUNDATIONAL LEARNING SKILLS OVERVIEW
+# -----------------------------------------------------------------------------
+
+cat("\n=== Foundational Learning Skills ===\n\n")
+
+# These are key MICS6 indicators for education quality
+fl_vars <- names(fs)[grepl("^FL", names(fs))]
+cat("Foundational Learning variables found:", length(fl_vars), "\n")
+
+# Key FL indicators typically include:
+# - Reading skills (FL21-FL25)
+# - Numeracy skills
+fl_key <- c("FL21", "FL22", "FL23", "FL24", "FL25")
+cat("\nKey Foundational Learning indicators:\n")
+for (v in fl_key) {
+  if (v %in% names(fs)) {
+    lbl <- attr(fs[[v]], "label")
+    cat(paste0("  ", v, ": ", ifelse(is.null(lbl), "[no label]", lbl), "\n"))
+    cat("  Distribution:\n")
+    print(table(as_factor(fs[[v]]), useNA = "ifany"))
+    cat("\n")
+  }
+}
+
+# -----------------------------------------------------------------------------
+# 11. CREATE SUMMARY STATISTICS BY KEY STRATIFIERS
+# -----------------------------------------------------------------------------
+
+cat("\n=== Summary Statistics by Stratifiers ===\n\n")
+
+# School attendance by wealth quintile
+if ("CB7" %in% names(children_education) && "wealth_quintile" %in% names(children_education)) {
+  cat("School Attendance by Wealth Quintile:\n")
+  attendance_by_wealth <- children_education %>%
+    filter(!is.na(CB7) & !is.na(wealth_quintile)) %>%
+    group_by(wealth_quintile) %>%
+    summarise(
+      n = n(),
+      pct_attending = mean(CB7 == 1, na.rm = TRUE) * 100,
+      .groups = "drop"
+    )
+  print(attendance_by_wealth)
+}
+
+# School attendance by area (urban/rural)
+if ("CB7" %in% names(children_education) && "area" %in% names(children_education)) {
+  cat("\nSchool Attendance by Area:\n")
+  attendance_by_area <- children_education %>%
+    filter(!is.na(CB7) & !is.na(area)) %>%
+    group_by(area) %>%
+    summarise(
+      n = n(),
+      pct_attending = mean(CB7 == 1, na.rm = TRUE) * 100,
+      .groups = "drop"
+    )
+  print(attendance_by_area)
+}
+
+# School attendance by region
+if ("CB7" %in% names(children_education) && "region" %in% names(children_education)) {
+  cat("\nSchool Attendance by Region:\n")
+  attendance_by_region <- children_education %>%
+    filter(!is.na(CB7) & !is.na(region)) %>%
+    group_by(region) %>%
+    summarise(
+      n = n(),
+      pct_attending = mean(CB7 == 1, na.rm = TRUE) * 100,
+      .groups = "drop"
+    )
+  print(attendance_by_region)
+}
+
+# -----------------------------------------------------------------------------
+# 12. SAVE PROCESSED DATA
+# -----------------------------------------------------------------------------
+
+cat("\n=== Saving Processed Data ===\n\n")
+
+# Save key datasets for further analysis
+saveRDS(hh_merge, file.path(data_processed, "hh_prepared.rds"))
+cat("Saved: hh_prepared.rds\n")
+
+saveRDS(children_education, file.path(data_processed, "children_education.rds"))
+cat("Saved: children_education.rds\n")
+
+# Save a data dictionary
+data_dictionary <- list(
+  hh_vars = data.frame(
+    variable = names(hh),
+    label = sapply(hh, function(x) {
+      lbl <- attr(x, "label")
+      ifelse(is.null(lbl), "", lbl)
+    })
+  ),
+  fs_vars = data.frame(
+    variable = names(fs),
+    label = sapply(fs, function(x) {
+      lbl <- attr(x, "label")
+      ifelse(is.null(lbl), "", lbl)
+    })
+  )
+)
+saveRDS(data_dictionary, file.path(data_processed, "data_dictionary.rds"))
+cat("Saved: data_dictionary.rds\n")
+
+cat("\n=== Data Preparation Complete ===\n")
+cat("Processed data saved to:", data_processed, "\n")
+
+# -----------------------------------------------------------------------------
+# 13. SESSION INFO
+# -----------------------------------------------------------------------------
+
+cat("\n=== Session Info ===\n")
+sessionInfo()

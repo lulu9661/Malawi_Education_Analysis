@@ -1,0 +1,9 @@
+term,OR,CI,p.value
+age,1.48,1.45 – 1.51,0
+sexFemale,1.35,1.23 – 1.48,0
+areaRural,0.63,0.55 – 0.73,0
+wealth_quintileSecond,1.16,0.99 – 1.37,0.07
+wealth_quintileMiddle,1.25,1.07 – 1.46,0.006
+wealth_quintileFourth,1.75,1.5 – 2.04,0
+wealth_quintileRichest,3.33,2.83 – 3.93,0
+disabled1,0.86,0.74 – 0.99,0.039

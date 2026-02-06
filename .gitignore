@@ -1,20 +1,18 @@
-# Data files (too large for GitHub)
-data/raw/
+# Data folders to exclude
 data/downloads/
 data/processed/
 
-# R
-.Rhistory
-.Rproj.user/
-*.Rproj
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+.venv/
 
-# macOS
+# Jupyter
+.ipynb_checkpoints/
+
+# OS files
 .DS_Store
-*~$*
-
-# Outputs (regenerable)
-outputs/
-
-# Temp files
-*.tmp
-*.log
+Thumbs.db
