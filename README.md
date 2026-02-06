@@ -2,6 +2,16 @@
 
 Exploratory analysis of learning poverty and out-of-school children in Malawi using MICS 6 and IHS 5 survey data.
 
+## :ledger: Table of Contents
+
+ [Overview](#overview)
+- [Data Sources](#data-sources)
+- [Repository Structure](#repository-structure)
+- [Requirements](#requirements)
+- [How to Reproduce the Analysis](#how-to-reproduce-the-analysis)
+- [Key Outputs](#key-outputs)
+- [License](#license)
+
 ## Overview
 
 This analysis examines two dimensions of educational exclusion in Malawi:
@@ -9,7 +19,7 @@ This analysis examines two dimensions of educational exclusion in Malawi:
 1. **Out-of-school children** — Which children are not attending school, and what factors predict non-attendance?
 2. **Foundational learning** — Among children in school, who is failing to acquire basic reading skills?
 
-## Data Sources
+##  :file_folder: Data Sources
 
 | Dataset | Description | Source |
 |---------|-------------|--------|
@@ -19,7 +29,7 @@ This analysis examines two dimensions of educational exclusion in Malawi:
 **Note:** Raw data files are included as zipped archives in `data/raw/`. Users must unzip these before running the analysis.
 
 
-## Repository Structure
+## :paperclip: Repository Structure
 
 ```
 ├── data/
@@ -63,7 +73,7 @@ This analysis examines two dimensions of educational exclusion in Malawi:
 │
 └── Exclusion from Education in Malawi.docx  # Final report
 ```
-## Requirements
+## :rainbow: Requirements
 
 ### Software
 - R (version 4.0 or higher)
@@ -71,7 +81,7 @@ This analysis examines two dimensions of educational exclusion in Malawi:
 - Required packages are installed in 01_data_preparation.R
 
 
-## How to Reproduce the Analysis
+## :closed_book: How to Reproduce the Analysis
 
 ### Step 1: Clone the repository
 
@@ -111,7 +121,7 @@ Results are saved to the `outputs/` folder:
 - `outputs/figures/` — PNG charts
 - `outputs/maps/` — Geographic visualizations by district
 
-## Key Outputs
+## :chart_with_upwards_trend: Key Outputs
 
 | File | Description |
 |------|-------------|
