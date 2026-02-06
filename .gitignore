@@ -1,0 +1,20 @@
+# Data files (too large for GitHub)
+data/raw/
+data/downloads/
+data/processed/
+
+# R
+.Rhistory
+.Rproj.user/
+*.Rproj
+
+# macOS
+.DS_Store
+*~$*
+
+# Outputs (regenerable)
+outputs/
+
+# Temp files
+*.tmp
+*.log
