@@ -4,13 +4,15 @@ Exploratory analysis of learning poverty and out-of-school children in Malawi us
 
 ## :ledger: Table of Contents
 
- [Overview](#overview)
-- [Data Sources](#data-sources)
-- [Repository Structure](#repository-structure)
-- [Requirements](#requirements)
-- [How to Reproduce the Analysis](#how-to-reproduce-the-analysis)
-- [Key Outputs](#key-outputs)
-- [License](#license)
+
+- Overview
+- Data Sources
+- Repository Structure
+- Requirements
+- How to Reproduce the Analysis
+- Key Outputs
+- License
+- AI disclosure
 
 ## Overview
 
@@ -137,3 +139,7 @@ Results are saved to the `outputs/` folder:
 
 Code: MIT License
 
+## :robot: AI disclosure
+For efficiency, and because I think it’s reflective of the environment in which research is now done, I used Claude Code to do much of the data processing in this report, and to create initial statistics and graphs, which I fully understand how to do manually and edited by hand to get desired stats, occasionally using Claude to support debugging. I asked Claude to suggest the file structure for GitHub and to do a quick initial scan for relevant literature. If this is contrary to the rules of the task, then it was a misunderstanding, and I am sorry.
+
+All written work is my own.
